@@ -1,0 +1,546 @@
+#include <HX711.h>
+#include <Wire.h>
+#include <LiquidCrystal_I2C.h>
+#define I2C_ADDR 0x27
+
+#define red1 22
+#define green1 23
+#define blue1 24
+#define red2 26
+#define green2 27
+#define blue2 28
+#define red3 14
+#define green3 15
+#define blue3 16
+#define red4 38
+#define green4 39
+#define blue4 40
+
+#define pompastart1 1
+#define pompalewo1 34
+#define pompaprawo1 35
+
+#define pompastart2 13
+#define pompalewo2 11
+#define pompaprawo2 10
+
+#define pompastart3 0
+#define pompalewo3 36
+#define pompaprawo3 37
+
+#define pompastart4 12
+#define pompalewo4 9
+#define pompaprawo4 8
+
+int stan_tara = 0;
+int lanie1 = 0;
+int stan_ciezar1 = 0;
+int stan_lanie1 = 0;
+int lanie2 = 0;
+int stan_ciezar2 = 0;
+int stan_lanie2 = 0;
+int lanie3 = 0;
+int stan_ciezar3 = 0;
+int stan_lanie3 = 0;
+int lanie4 = 0;
+int stan_ciezar4 = 0;
+int stan_lanie4 = 0;
+
+float procent1;
+char procent1_fin[8];
+float procent2;
+char procent2_fin[8];
+float procent3;
+char procent3_fin[8];
+float procent4;
+char procent4_fin[8];
+
+int ml1;
+float ml11;
+char ml111[8];
+int ml2;
+float ml22;
+char ml222[8];
+int ml3;
+float ml33;
+char ml333[8];
+int ml4;
+float ml44;
+char ml444[8];
+
+HX711 waga1;
+float ciezar1;
+char odczyt1[8];
+
+HX711 waga2;
+float ciezar2;
+char odczyt2[8];
+
+HX711 waga3;
+float ciezar3;
+char odczyt3[8];
+
+HX711 waga4;
+float ciezar4;
+char odczyt4[8];
+
+unsigned long Czas_tara = 0;
+unsigned long aktualnyCzas = 0;
+unsigned long Start1 = 0;
+unsigned long Start2 = 0;
+unsigned long Start3 = 0;
+unsigned long Start4 = 0;
+
+LiquidCrystal_I2C lcd(I2C_ADDR, 2, 1, 0, 4, 5, 6, 7);
+
+void setup() {
+  Serial.begin(9600);
+
+  lcd.begin(20, 4);
+  lcd.setBacklightPin(3, POSITIVE);
+  lcd.setBacklight(HIGH);
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("Witaj!");
+  lcd.setCursor(0, 1);
+  lcd.print("Chlapnij sobie!");
+  lcd.setCursor(13, 3);
+  lcd.print("Kasztan");
+  delay(1000);
+  lcd.clear();
+
+  waga1.begin(A2, A3);
+  waga1.set_scale(419341.0 / 400.0);
+  waga1.tare(5);
+  waga2.begin(A0, A1);
+  waga2.set_scale(419341.0 / 400.0);
+  waga2.tare(5);
+  waga3.begin(A6, A7);
+  waga3.set_scale(419341.0 / 400.0);
+  waga3.tare(5);
+  waga4.begin(A5, A4);
+  waga4.set_scale(419341.0 / 400.0);
+  waga4.tare(5);
+
+  pinMode(red1, OUTPUT);
+  pinMode(blue1, OUTPUT);
+  pinMode(green1, OUTPUT);
+  pinMode(red2, OUTPUT);
+  pinMode(blue2, OUTPUT);
+  pinMode(green2, OUTPUT);
+  pinMode(red3, OUTPUT);
+  pinMode(blue3, OUTPUT);
+  pinMode(green3, OUTPUT);
+  pinMode(red4, OUTPUT);
+  pinMode(blue4, OUTPUT);
+  pinMode(green4, OUTPUT);
+
+  pinMode(pompastart1, OUTPUT);
+  pinMode(pompalewo1, OUTPUT);
+  pinMode(pompaprawo1, OUTPUT);
+  pinMode(pompastart2, OUTPUT);
+  pinMode(pompalewo2, OUTPUT);
+  pinMode(pompaprawo2, OUTPUT);
+  pinMode(pompastart3, OUTPUT);
+  pinMode(pompalewo3, OUTPUT);
+  pinMode(pompaprawo3, OUTPUT);
+  pinMode(pompastart4, OUTPUT);
+  pinMode(pompalewo4, OUTPUT);
+  pinMode(pompaprawo4, OUTPUT);
+}
+
+void loop()
+{
+  pomiar_waga();
+  pomiar();
+  ekran();
+  aktualnyCzas = millis();
+  dozowanie_1();
+  Serial.println("dozowanie1");
+  Serial.println(ciezar1);
+  Serial.println(ml11);
+  pomiar();
+  ekran();
+  aktualnyCzas = millis();
+  dozowanie_2();
+  Serial.println("dozowanie2");
+  Serial.println(ciezar2);
+  Serial.println(ml22);
+  pomiar();
+  ekran();
+  aktualnyCzas = millis();
+  dozowanie_3();
+  pomiar();
+  ekran();
+  aktualnyCzas = millis();
+  dozowanie_4();
+
+
+}
+
+void dozowanie_1()
+{
+  if (ciezar1 >= 20 && stan_ciezar1 == 0 && lanie1 == 0)
+  {
+
+    digitalWrite(red1, HIGH);
+    digitalWrite(green1, LOW);
+    digitalWrite(blue1, LOW);
+    Start1 = millis();
+    stan_ciezar1 = 1;
+    pomiar_waga();
+  }
+  if (ciezar1 < 5 && lanie1 == 0)
+  {
+    Serial.println("podnosze1");
+    analogWrite(pompastart1, 0);
+    digitalWrite(pompalewo1, LOW);
+    digitalWrite(pompaprawo1, LOW);
+    stan_ciezar1 = 0;
+    stan_lanie1 = 0;
+    digitalWrite(red1, LOW);
+    digitalWrite(green1, HIGH);
+    digitalWrite(blue1, LOW);
+    lcd.setCursor(12, 0);
+    lcd.print("        ");
+    pomiar_waga();
+  }
+  if (ciezar1 <= -1)
+  {
+    stan_ciezar1 = 0;
+    stan_lanie1 = 0;
+    lanie1 = 0;
+    digitalWrite(red1, LOW);
+    digitalWrite(green1, HIGH);
+    digitalWrite(blue1, LOW);
+    waga1.tare(1);
+    pomiar_waga();
+  }
+  if (aktualnyCzas - Start1 >= 2000 && stan_ciezar1 == 1)
+  {
+    waga1.tare(1);
+    stan_lanie1 = 1;
+    stan_ciezar1 = 0;
+    pomiar_waga();
+  }
+
+  if (ciezar1 <= ml11 && stan_lanie1 == 1)
+  {
+    analogWrite(pompastart1, 200);
+    digitalWrite(pompalewo1, HIGH);
+    digitalWrite(pompaprawo1, LOW);
+    lanie1 = 1;
+    digitalWrite(red1, LOW);
+    digitalWrite(green1, LOW);
+    digitalWrite(blue1, HIGH);
+    procent1 = (ciezar1 / ml11) * 100;
+    dtostrf(procent1, 3, 0, procent1_fin);
+    lcd.setCursor(12, 0);
+    lcd.print("Cyk ");
+    lcd.print(procent1_fin);
+    lcd.print("%");
+    pomiar_waga();
+
+  }
+  if (ciezar1 >= ml11 && stan_lanie1 == 1)
+  {
+    analogWrite(pompastart1, 0);
+    digitalWrite(pompalewo1, LOW);
+    digitalWrite(pompaprawo1, LOW);
+    lcd.setCursor(12, 0);
+    lcd.print("        ");
+    digitalWrite(red1, HIGH);
+    digitalWrite(green1, HIGH);
+    digitalWrite(blue1, HIGH);
+    waga1.tare(1);
+    lanie1 = 0;
+    stan_lanie1 = 0;
+    pomiar_waga();
+  }
+}
+
+void dozowanie_2()
+{
+  if (ciezar2 >= 20 && stan_ciezar2 == 0 && lanie2 == 0)
+  {
+
+    digitalWrite(red2, HIGH);
+    digitalWrite(green2, LOW);
+    digitalWrite(blue2, LOW);
+    Start2 = millis();
+    stan_ciezar2 = 1;
+    pomiar_waga();
+  }
+  if (ciezar2 < 5 && lanie2 == 0)
+  {
+    Serial.println("podnosze1");
+    analogWrite(pompastart2, 0);
+    digitalWrite(pompalewo2, LOW);
+    digitalWrite(pompaprawo2, LOW);
+    stan_ciezar2 = 0;
+    stan_lanie2 = 0;
+    digitalWrite(red2, LOW);
+    digitalWrite(green2, HIGH);
+    digitalWrite(blue2, LOW);
+    lcd.setCursor(12, 1);
+    lcd.print("        ");
+    pomiar_waga();
+  }
+  if (ciezar2 <= -1)
+  {
+    stan_ciezar2 = 0;
+    stan_lanie2 = 0;
+    lanie2 = 0;
+    digitalWrite(red2, LOW);
+    digitalWrite(green2, HIGH);
+    digitalWrite(blue2, LOW);
+    waga2.tare(1);
+    pomiar_waga();
+  }
+  if (aktualnyCzas - Start2 >= 2000 && stan_ciezar2 == 1)
+  {
+    waga2.tare(1);
+    stan_lanie2 = 1;
+    stan_ciezar2 = 0;
+    pomiar_waga();
+  }
+
+  if (ciezar2 <= ml22 && stan_lanie2 == 1)
+  {
+    analogWrite(pompastart2, 200);
+    digitalWrite(pompalewo2, HIGH);
+    digitalWrite(pompaprawo2, LOW);
+    lanie2 = 1;
+    digitalWrite(red2, LOW);
+    digitalWrite(green2, LOW);
+    digitalWrite(blue2, HIGH);
+    procent2 = (ciezar2 / ml22) * 100;
+    dtostrf(procent2, 3, 0, procent2_fin);
+    lcd.setCursor(12, 1);
+    lcd.print("Cyk ");
+    lcd.print(procent2_fin);
+    lcd.print("%");
+    pomiar_waga();
+
+  }
+  if (ciezar2 >= ml22 && stan_lanie2 == 1)
+  {
+    analogWrite(pompastart2, 0);
+    digitalWrite(pompalewo2, LOW);
+    digitalWrite(pompaprawo2, LOW);
+    lcd.setCursor(12, 1);
+    lcd.print("        ");
+    digitalWrite(red2, HIGH);
+    digitalWrite(green2, HIGH);
+    digitalWrite(blue2, HIGH);
+    waga2.tare(1);
+    lanie2 = 0;
+    stan_lanie2 = 0;
+    pomiar_waga();
+  }
+}
+void dozowanie_3()
+{
+  if (ciezar3 >= 20 && stan_ciezar3 == 0 && lanie3 == 0)
+  {
+
+    digitalWrite(red3, HIGH);
+    digitalWrite(green3, LOW);
+    digitalWrite(blue3, LOW);
+    Start3 = millis();
+    stan_ciezar3 = 1;
+    pomiar_waga();
+  }
+  if (ciezar3 < 5 && lanie3 == 0)
+  {
+    analogWrite(pompastart3, 0);
+    digitalWrite(pompalewo3, LOW);
+    digitalWrite(pompaprawo3, LOW);
+    stan_ciezar3 = 0;
+    stan_lanie3 = 0;
+    digitalWrite(red3, LOW);
+    digitalWrite(green3, HIGH);
+    digitalWrite(blue3, LOW);
+    lcd.setCursor(12, 2);
+    lcd.print("        ");
+    pomiar_waga();
+  }
+  if (ciezar3 <= -1)
+  {
+    stan_ciezar3 = 0;
+    stan_lanie3 = 0;
+    lanie3 = 0;
+    digitalWrite(red3, LOW);
+    digitalWrite(green3, HIGH);
+    digitalWrite(blue3, LOW);
+    waga3.tare(1);
+    pomiar_waga();
+  }
+  if (aktualnyCzas - Start3 >= 2000 && stan_ciezar3 == 1)
+  {
+    waga3.tare(1);
+    stan_lanie3 = 1;
+    stan_ciezar3 = 0;
+    pomiar_waga();
+  }
+
+  if (ciezar3 <= ml33 && stan_lanie3 == 1)
+  {
+    analogWrite(pompastart3, 200);
+    digitalWrite(pompalewo3, HIGH);
+    digitalWrite(pompaprawo3, LOW);
+    lanie3 = 1;
+    digitalWrite(red3, LOW);
+    digitalWrite(green3, LOW);
+    digitalWrite(blue3, HIGH);
+    procent3 = (ciezar3 / ml33) * 100;
+    dtostrf(procent3, 3, 0, procent3_fin);
+    lcd.setCursor(12, 2);
+    lcd.print("Cyk ");
+    lcd.print(procent3_fin);
+    lcd.print("%");
+    pomiar_waga();
+
+  }
+  if (ciezar3 >= ml33 && stan_lanie3 == 1)
+  {
+    analogWrite(pompastart3, 0);
+    digitalWrite(pompalewo3, LOW);
+    digitalWrite(pompaprawo3, LOW);
+    lcd.setCursor(12, 2);
+    lcd.print("        ");
+    digitalWrite(red3, HIGH);
+    digitalWrite(green3, HIGH);
+    digitalWrite(blue3, HIGH);
+    waga3.tare(1);
+    lanie3 = 0;
+    stan_lanie3 = 0;
+    pomiar_waga();
+  }
+}
+void dozowanie_4()
+{
+  if (ciezar4 >= 20 && stan_ciezar4 == 0 && lanie4 == 0)
+  {
+
+    digitalWrite(red4, HIGH);
+    digitalWrite(green4, LOW);
+    digitalWrite(blue4, LOW);
+    Start4 = millis();
+    stan_ciezar4 = 1;
+    pomiar_waga();
+  }
+  if (ciezar4 < 5 && lanie4 == 0)
+  {
+    analogWrite(pompastart4, 0);
+    digitalWrite(pompalewo4, LOW);
+    digitalWrite(pompaprawo4, LOW);
+    stan_ciezar4 = 0;
+    stan_lanie4 = 0;
+    digitalWrite(red4, LOW);
+    digitalWrite(green4, HIGH);
+    digitalWrite(blue4, LOW);
+    lcd.setCursor(12, 3);
+    lcd.print("        ");
+    pomiar_waga();
+  }
+  if (ciezar4 <= -1)
+  {
+    stan_ciezar4 = 0;
+    stan_lanie4 = 0;
+    lanie4 = 0;
+    digitalWrite(red4, LOW);
+    digitalWrite(green4, HIGH);
+    digitalWrite(blue4, LOW);
+    waga4.tare(1);
+    pomiar_waga();
+  }
+  if (aktualnyCzas - Start4 >= 2000 && stan_ciezar4 == 1)
+  {
+    waga4.tare(1);
+    stan_lanie4 = 1;
+    stan_ciezar4 = 0;
+    pomiar_waga();
+  }
+
+  if (ciezar4 <= ml44 && stan_lanie4 == 1)
+  {
+    analogWrite(pompastart4, 200);
+    digitalWrite(pompalewo4, HIGH);
+    digitalWrite(pompaprawo4, LOW);
+    lanie4 = 1;
+    digitalWrite(red4, LOW);
+    digitalWrite(green4, LOW);
+    digitalWrite(blue4, HIGH);
+    procent4 = (ciezar4 / ml44) * 100;
+    dtostrf(procent4, 3, 0, procent4_fin);
+    lcd.setCursor(12, 3);
+    lcd.print("Cyk ");
+    lcd.print(procent4_fin);
+    lcd.print("%");
+    pomiar_waga();
+
+  }
+  if (ciezar4 >= ml44 && stan_lanie4 == 1)
+  {
+    analogWrite(pompastart4, 0);
+    digitalWrite(pompalewo4, LOW);
+    digitalWrite(pompaprawo4, LOW);
+    lcd.setCursor(12, 3);
+    lcd.print("        ");
+    digitalWrite(red4, HIGH);
+    digitalWrite(green4, HIGH);
+    digitalWrite(blue4, HIGH);
+    waga4.tare(1);
+    lanie4 = 0;
+    stan_lanie4 = 0;
+    pomiar_waga();
+  }
+}
+
+
+void pomiar_waga()
+{
+  ciezar1 = waga1.get_units();
+  dtostrf(ciezar1, 3, 0, odczyt1);
+  ciezar2 = waga2.get_units();
+  dtostrf(ciezar2, 3, 0, odczyt2);
+  ciezar3 = waga3.get_units();
+  dtostrf(ciezar3, 3, 0, odczyt3);
+  ciezar4 = waga4.get_units();
+  dtostrf(ciezar4, 3, 0, odczyt4);
+}
+void ekran()
+{
+  lcd.setCursor(0, 0);
+  lcd.print("1. Lej:");
+  lcd.print(ml111);
+  lcd.print("g");
+  lcd.setCursor(0, 1);
+  lcd.print("2. Lej:");
+  lcd.print(ml222);
+  lcd.print("g");
+  lcd.setCursor(0, 2);
+  lcd.print("3. Lej:");
+  lcd.print(ml333);
+  lcd.print("g");
+  lcd.setCursor(0, 3);
+  lcd.print("4. Lej:");
+  lcd.print(ml444);
+  lcd.print("g");
+}
+void pomiar()
+{
+  ml1 = analogRead(A8);
+  ml11 = map(ml1, 1020, 0, 5, 30);
+  dtostrf(ml11, 3, 0, ml111);
+  ml2 = analogRead(A9);
+  ml22 = map(ml2, 1020, 0, 5, 30);
+  dtostrf(ml22, 3, 0, ml222);
+  ml3 = analogRead(A10);
+  ml33 = map(ml3, 1020, 0, 5, 30);
+  dtostrf(ml33, 3, 0, ml333);
+  ml4 = analogRead(A11);
+  ml44 = map(ml4, 1020, 0, 5, 30);
+  dtostrf(ml44, 3, 0, ml444);
+}
