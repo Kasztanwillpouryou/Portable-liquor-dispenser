@@ -1,0 +1,20 @@
+Części których użyłem do budowy:
+- arduino ATmega2560 – 1 szt.
+- shield dla Mega2560 Expansion Sensor Board v2.0 – 1 szt.
+- wyświetlacz LCD 4x20 - ze sterownikiem kompatybilnym z HD44780 – 1 szt.
+- konwerter I2C do wyświetlacza LCD HD44780 – 1 szt.
+- wzmacniacz do belki tensometrycznej HX711 - 4szt.
+- belka tensometryczna 1kg – 4 szt.
+- moduł sterownika L298N do silników DC – 2 szt.
+- mini Pompa Perystaltyczna - DC 3.7V / 6V – 4 szt.
+- potencjometr liniowy 1K – 4 szt.
+- wtyk DC 2,1/5,5mm z zaciskami skręcanymi – 1 szt.
+- gniazdo DC 2,1/5,5 do obudowy plastikowe -1szt.
+- Przełącznik kołyskowy – 1 szt.
+- Moduł z diodą LED RGB – 4 szt.
+- Przewody połączeniowe
+- zasilacz wtyczkowy UMEC impulsowy 12V 30W 2,5A – 1 szt.
+- ŁĄCZNIK PROSTY plastikowy ZŁĄCZKA POM wąż 4mm – 8 szt.
+- ŁĄCZNIK TRÓJNIK T plastikowy POM do węża 4mm – 4 szt.
+- WĄŻ SILIKONOWY 6x4mm SILIKON wężyk przewód 6/4mm – 3 m
+- trochę śrubek i nakrętek M3, M4
